@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  main.container
+    h1 Smart Reminders
+    p Express + Pug + MongoDB + Home Assistant
+    if error
+      .card.error
+        h2 Home Assistant Fehler
+        p= error
+    else if status
+      .card
+        h2 Home Assistant Status
+        pre= JSON.stringify(status, null, 2)
+    else
+      .card
+        h2 Home Assistant Status
+        p Noch keine Daten.
