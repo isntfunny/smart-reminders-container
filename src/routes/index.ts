@@ -1,12 +1,25 @@
 import { Router } from "express";
 import type { HomeAssistantClient } from "../homeAssistant";
+import { EntityModel } from "../models/Entity";
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export function createIndexRouter(hass: HomeAssistantClient): Router {
   const router = Router();
 
-  router.get("/", async (_req, res) => {
+  router.get("/", async (req, res) => {
     let status: unknown = null;
     let error: string | null = null;
+    let entities: Array<{
+      entityId: string;
+      domain: string;
+      state: string | null;
+      attributes: Record<string, unknown>;
+      lastSeen: Date;
+    }> = [];
+    const entityQuery = typeof req.query.q === "string" ? req.query.q.trim() : "";
 
     try {
       status = await hass.status();
@@ -14,10 +27,24 @@ export function createIndexRouter(hass: HomeAssistantClient): Router {
       error = err instanceof Error ? err.message : "Unknown Home Assistant error";
     }
 
+    if (entityQuery) {
+      const escaped = escapeRegex(entityQuery);
+      const pattern = new RegExp(escaped, "i");
+      entities = await EntityModel.find({
+        $or: [{ entityId: pattern }, { domain: pattern }]
+      })
+        .sort({ lastSeen: -1 })
+        .limit(25)
+        .lean()
+        .exec();
+    }
+
     res.render("index", {
       title: "Smart Reminders",
       status,
-      error
+      error,
+      entityQuery,
+      entities
     });
   });
 

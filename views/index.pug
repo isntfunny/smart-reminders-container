@@ -4,6 +4,31 @@ block content
   main.container
     h1 Smart Reminders
     p Express + Pug + MongoDB + Home Assistant
+    .card
+      h2 MongoDB Entity Viewer
+      form.search-form(method="get" action="/")
+        label(for="entityQuery") Entity suchen
+        .search-row
+          input#entityQuery(type="text" name="q" placeholder="z.B. light.kitchen" value=entityQuery)
+          button(type="submit") Suchen
+      if entityQuery
+        if entities.length
+          p.results-info #{entities.length} Treffer für "#{entityQuery}"
+          each entity in entities
+            .entity-card
+              .entity-header
+                h3= entity.entityId
+                span.badge= entity.domain
+              p
+                strong State:
+                |  #{entity.state || "null"}
+              p
+                strong Last seen:
+                |  #{new Date(entity.lastSeen).toLocaleString("de-DE")}
+              if entity.attributes
+                pre= JSON.stringify(entity.attributes, null, 2)
+        else
+          p.results-info Keine Treffer für "#{entityQuery}".
     if error
       .card.error
         h2 Home Assistant Fehler

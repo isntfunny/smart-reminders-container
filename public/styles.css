@@ -46,6 +46,67 @@ p {
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+.search-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.search-form label {
+  font-weight: 600;
+}
+
+.search-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-row input {
+  flex: 1 1 220px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  font-size: 15px;
+}
+
+.search-row button {
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: none;
+  background: #1b1b1f;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.results-info {
+  margin: 12px 0 0;
+  font-weight: 600;
+}
+
+.entity-card {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.entity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f3e7ff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .card.error {
   border-color: #ff7b7b;
   background: #fff3f3;
