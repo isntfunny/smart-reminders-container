@@ -15,8 +15,8 @@ export function createIndexRouter(hass: HomeAssistantClient): Router {
     let entities: Array<{
       entityId: string;
       domain: string;
-      state: string | null;
-      attributes: Record<string, unknown>;
+      state?: string | null;
+      attributes?: Record<string, unknown>;
       lastSeen: Date;
     }> = [];
     const entityQuery = typeof req.query.q === "string" ? req.query.q.trim() : "";
