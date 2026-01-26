@@ -28,7 +28,7 @@ async function syncEntities(hass: HomeAssistantClient, staleDays: number): Promi
   let states: unknown;
 
   try {
-    states = await hass.getStates();
+    states = await hass.states.list();
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown Home Assistant error";
     console.error("Failed to fetch Home Assistant states:", message);
