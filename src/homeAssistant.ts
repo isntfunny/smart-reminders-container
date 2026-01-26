@@ -1,4 +1,5 @@
 import HomeAssistant from "homeassistant";
+import { logger } from "./logger";
 
 export type HomeAssistantClient = HomeAssistant;
 
@@ -9,11 +10,14 @@ export function createHomeAssistantClient(): HomeAssistantClient {
   const parsed = new URL(haUrl);
   const host = `${parsed.protocol}//${parsed.hostname}`;
   const port = parsed.port ? Number(parsed.port) : 8123;
+  const ignoreCert = parsed.protocol === "https:" && parsed.hostname === "localhost";
+
+  logger.info("Home Assistant client configured for %s:%d", host, port);
 
   return new HomeAssistant({
     host,
     port,
     token,
-    ignoreCert: parsed.protocol === "https:" && parsed.hostname === "localhost"
+    ignoreCert
   });
 }

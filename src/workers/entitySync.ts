@@ -1,5 +1,6 @@
 import type { HomeAssistantClient } from "../homeAssistant";
 import { EntityModel } from "../models/Entity";
+import { logger } from "../logger";
 
 type HomeAssistantEntityState = {
   entity_id: string;
@@ -31,14 +32,16 @@ async function syncEntities(hass: HomeAssistantClient, staleDays: number): Promi
     states = await hass.states.list();
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown Home Assistant error";
-    console.error("Failed to fetch Home Assistant states:", message);
+    logger.error("Failed to fetch Home Assistant states: %s", message);
     return;
   }
 
   if (!Array.isArray(states)) {
-    console.warn("Unexpected Home Assistant states response; expected array.");
+    logger.warn("Unexpected Home Assistant states response; expected array.");
     return;
   }
+
+  logger.debug("Fetched %d Home Assistant states", states.length);
 
   const ops = states
     .filter((entry): entry is HomeAssistantEntityState => {
@@ -55,49 +58,64 @@ async function syncEntities(hass: HomeAssistantClient, staleDays: number): Promi
           state: entry.state ?? null,
           attributes,
           lastSeen: now
-        },
-        $setOnInsert: {
-          attributeKeys: []
         }
       };
 
       if (attributeKeys.length) {
         update.$addToSet = { attributeKeys: { $each: attributeKeys } };
+      } else {
+        update.$setOnInsert = { attributeKeys: [] };
       }
 
       return {
         updateOne: {
           filter: { entityId },
           update,
-          upsert: true,
-          setDefaultsOnInsert: true
+          upsert: true
         }
       };
     });
 
   if (ops.length) {
     try {
-      await EntityModel.bulkWrite(ops, { ordered: false });
+      const result = await EntityModel.bulkWrite(ops, { ordered: false });
+      logger.info(
+        "Upserted Home Assistant entities: %d matched, %d upserted, %d modified",
+        result.matchedCount,
+        result.upsertedCount,
+        result.modifiedCount
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown MongoDB error";
-      console.error("Failed to upsert Home Assistant entities:", message);
+      logger.error("Failed to upsert Home Assistant entities: %s", message);
     }
+  } else {
+    logger.warn("No valid Home Assistant entities to upsert");
   }
 
   const staleMs = Math.max(staleDays, 1) * 24 * 60 * 60 * 1000;
   const cutoff = new Date(now.getTime() - staleMs);
 
   try {
-    await EntityModel.deleteMany({ lastSeen: { $lt: cutoff } });
+    const result = await EntityModel.deleteMany({ lastSeen: { $lt: cutoff } });
+    if (result.deletedCount) {
+      logger.info("Removed %d stale entities", result.deletedCount);
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown MongoDB error";
-    console.error("Failed to remove stale entities:", message);
+    logger.error("Failed to remove stale entities: %s", message);
   }
 }
 
 export function startEntitySyncWorker(hass: HomeAssistantClient): void {
   const intervalMs = Number(process.env.ENTITY_SYNC_INTERVAL_MS || DEFAULT_INTERVAL_MS);
   const staleDays = Number(process.env.ENTITY_STALE_DAYS || DEFAULT_STALE_DAYS);
+
+  logger.info(
+    "Starting entity sync worker (interval=%dms, staleDays=%d)",
+    intervalMs,
+    staleDays
+  );
 
   void syncEntities(hass, staleDays);
 
