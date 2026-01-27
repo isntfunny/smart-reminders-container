@@ -29,6 +29,22 @@ block content
                 pre= JSON.stringify(entity.attributes, null, 2)
         else
           p.results-info Keine Treffer für "#{entityQuery}".
+    .card
+      h2 OpenRouter Prompt
+      if !openRouterEnabled
+        p Bitte OPENROUTER_API_KEY setzen, um OpenRouter zu nutzen.
+      else
+        form.prompt-form(method="post" action="/openrouter")
+          label(for="promptInput") Nachricht an OpenRouter
+          .prompt-row
+            input#promptInput(type="text" name="prompt" placeholder="z.B. Erstelle eine Erinnerung für morgen 9 Uhr" value=openRouterPrompt)
+            button(type="submit") Senden
+        if openRouterError
+          p.results-info= openRouterError
+        else if openRouterResponse
+          .prompt-output
+            h3 Antwort
+            p= openRouterResponse
     if error
       .card.error
         h2 Home Assistant Fehler

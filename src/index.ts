@@ -3,6 +3,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { createHomeAssistantClient } from "./homeAssistant";
+import { createOpenRouterClient } from "./openRouter";
 import { createIndexRouter } from "./routes/index";
 import { startEntitySyncWorker } from "./workers/entitySync";
 import { logger } from "./logger";
@@ -18,6 +19,7 @@ app.set("view engine", "pug");
 
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
   const startedAt = Date.now();
   res.on("finish", () => {
@@ -30,7 +32,8 @@ app.use((req, res, next) => {
 });
 
 const hass = createHomeAssistantClient();
-app.use("/", createIndexRouter(hass));
+const openRouter = createOpenRouterClient();
+app.use("/", createIndexRouter(hass, openRouter));
 
 async function start() {
   try {

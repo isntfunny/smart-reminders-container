@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { HomeAssistantClient } from "../homeAssistant";
 import { EntityModel } from "../models/Entity";
+import type { OpenRouterClient } from "../openRouter";
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -9,7 +10,10 @@ function escapeRegex(value: string): string {
 export function createIndexRouter(hass: HomeAssistantClient): Router {
   const router = Router();
 
-  router.get("/", async (req, res) => {
+export function createIndexRouter(hass: HomeAssistantClient, openRouter: OpenRouterClient | null): Router {
+  const router = Router();
+
+  async function getBaseViewData(entityQuery: string) {
     let status: unknown = null;
     let error: string | null = null;
     let entities: Array<{
@@ -19,7 +23,6 @@ export function createIndexRouter(hass: HomeAssistantClient): Router {
       attributes?: Record<string, unknown>;
       lastSeen: Date;
     }> = [];
-    const entityQuery = typeof req.query.q === "string" ? req.query.q.trim() : "";
 
     try {
       status = await hass.status();
@@ -39,12 +42,57 @@ export function createIndexRouter(hass: HomeAssistantClient): Router {
         .exec();
     }
 
-    res.render("index", {
+    return {
       title: "Smart Reminders",
       status,
       error,
       entityQuery,
-      entities
+      entities,
+      openRouterEnabled: Boolean(openRouter)
+    };
+  }
+
+  router.get("/", async (req, res) => {
+    const entityQuery = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    const baseData = await getBaseViewData(entityQuery);
+
+    res.render("index", {
+      ...baseData,
+      openRouterPrompt: "",
+      openRouterResponse: null,
+      openRouterError: null
+    });
+  });
+
+  router.post("/openrouter", async (req, res) => {
+    const prompt = typeof req.body.prompt === "string" ? req.body.prompt.trim() : "";
+    const baseData = await getBaseViewData("");
+    let openRouterResponse: string | null = null;
+    let openRouterError: string | null = null;
+
+    if (!openRouter) {
+      openRouterError = "OpenRouter ist nicht konfiguriert. Bitte OPENROUTER_API_KEY setzen.";
+    } else if (!prompt) {
+      openRouterError = "Bitte eine Nachricht eingeben.";
+    } else {
+      try {
+        const completion = await openRouter.client.chat.completions.create({
+          model: openRouter.model,
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: openRouter.maxTokens,
+          temperature: openRouter.temperature
+        });
+        openRouterResponse = completion.choices[0]?.message?.content?.trim() || null;
+      } catch (err) {
+        openRouterError = err instanceof Error ? err.message : "Unbekannter OpenRouter Fehler";
+      }
+    }
+
+    res.render("index", {
+      ...baseData,
+      openRouterPrompt: prompt,
+      openRouterResponse,
+      openRouterError
     });
   });
 

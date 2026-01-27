@@ -51,20 +51,25 @@ async function syncEntities(hass: HomeAssistantClient, staleDays: number): Promi
       const entityId = String(entry.entity_id);
       const attributes = toAttributes(entry.attributes);
       const attributeKeys = Object.keys(attributes);
-      const update: Record<string, unknown> = {
-        $set: {
-          entityId,
-          domain: getDomain(entityId),
-          state: entry.state ?? null,
-          attributes,
-          lastSeen: now
-        }
+      const setFields: Record<string, unknown> = {
+        entityId,
+        domain: getDomain(entityId),
+        state: entry.state ?? null,
+        lastSeen: now
       };
+
+      if (attributeKeys.length) {
+        for (const key of attributeKeys) {
+          setFields[`attributes.${key}`] = attributes[key];
+        }
+      }
+
+      const update: Record<string, unknown> = { $set: setFields };
 
       if (attributeKeys.length) {
         update.$addToSet = { attributeKeys: { $each: attributeKeys } };
       } else {
-        update.$setOnInsert = { attributeKeys: [] };
+        update.$setOnInsert = { attributeKeys: [], attributes: {} };
       }
 
       return {
