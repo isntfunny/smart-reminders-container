@@ -7,9 +7,6 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function createIndexRouter(hass: HomeAssistantClient): Router {
-  const router = Router();
-
 export function createIndexRouter(hass: HomeAssistantClient, openRouter: OpenRouterClient | null): Router {
   const router = Router();
 
@@ -104,6 +101,34 @@ export function createIndexRouter(hass: HomeAssistantClient, openRouter: OpenRou
       const message = err instanceof Error ? err.message : "Unknown Home Assistant error";
       res.status(500).json({ ok: false, error: message });
     }
+  });
+
+  router.post("/api/automation/mock", (_req, res) => {
+    res.json({
+      ok: true,
+      title: "Abendroutine: Fenster & Licht",
+      message:
+        "Ich habe eine Automation erstellt, die um 22:00 Uhr prüft, ob ein Fenster offen ist und dann das Licht im Flur einschaltet sowie eine Benachrichtigung sendet.",
+      yaml: `alias: Abendroutine Fenstercheck
+description: >
+  Prüft um 22:00 Uhr offene Fenster und schaltet das Flurlicht ein.
+trigger:
+  - platform: time
+    at: "22:00:00"
+condition:
+  - condition: state
+    entity_id: binary_sensor.window_living_room
+    state: "on"
+action:
+  - service: light.turn_on
+    target:
+      entity_id: light.hallway
+  - service: notify.mobile_app_phone
+    data:
+      title: "Fenster offen"
+      message: "Bitte das Wohnzimmerfenster schließen."
+mode: single`
+    });
   });
 
   return router;

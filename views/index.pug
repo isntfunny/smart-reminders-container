@@ -45,6 +45,20 @@ block content
           .prompt-output
             h3 Antwort
             p= openRouterResponse
+    .card
+      h2 Automation Builder
+      p Formuliere eine Anforderung und erhalte eine Home Assistant Automation im YAML-Format.
+      form#automationForm.prompt-form
+        label(for="automationPrompt") Automation Wunsch
+        .prompt-row
+          input#automationPrompt(type="text" name="prompt" placeholder="z.B. Wenn die Haustür abends öffnet, Licht an" autocomplete="off")
+          button(type="submit") Generieren
+      p#automationStatus.results-info.is-hidden
+      .prompt-output#automationResult.is-hidden
+        h3#automationTitle
+        p#automationMessage
+        .editor-shell
+          #automationEditor.editor
     if error
       .card.error
         h2 Home Assistant Fehler

@@ -120,6 +120,22 @@ p {
   border-top: 1px dashed rgba(0, 0, 0, 0.1);
 }
 
+.editor-shell {
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  background: #0f0f14;
+}
+
+.editor {
+  height: 260px;
+}
+
+.is-hidden {
+  display: none;
+}
+
 .results-info {
   margin: 12px 0 0;
   font-weight: 600;
