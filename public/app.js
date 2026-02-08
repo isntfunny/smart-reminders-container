@@ -8,8 +8,12 @@
   const titleEl = document.getElementById("automationTitle");
   const messageEl = document.getElementById("automationMessage");
   const editorHost = document.getElementById("automationEditor");
+  const clearButton = document.getElementById("clearAutomation");
+  const refineInput = document.getElementById("automationRefine");
+  const refineButton = document.getElementById("refineAutomation");
   let editor = null;
   let monacoReady = null;
+  let lastYaml = "";
 
   if (!form) {
     return;
@@ -30,12 +34,29 @@
     resultEl.classList.remove("is-hidden");
   }
 
+  function hideResult() {
+    resultEl.classList.add("is-hidden");
+  }
+
   function setYaml(value) {
     if (editor) {
       editor.setValue(value);
       return;
     }
     editorHost.textContent = value;
+  }
+
+  function clearBuilder() {
+    promptInput.value = "";
+    if (refineInput) {
+      refineInput.value = "";
+    }
+    lastYaml = "";
+    titleEl.textContent = "";
+    messageEl.textContent = "";
+    setYaml("");
+    hideResult();
+    clearStatus();
   }
 
   function ensureMonaco() {
@@ -108,7 +129,8 @@
       titleEl.textContent = payload.title || "Automation";
       messageEl.textContent = payload.message || "";
       await ensureMonaco();
-      setYaml(payload.yaml || "");
+      lastYaml = payload.yaml || "";
+      setYaml(lastYaml);
       showResult();
       setStatus("Fertig.", false);
     } catch (err) {
@@ -116,4 +138,57 @@
       setStatus(message, true);
     }
   });
+
+  if (clearButton) {
+    clearButton.addEventListener("click", () => {
+      clearBuilder();
+    });
+  }
+
+  if (refineButton) {
+    refineButton.addEventListener("click", async () => {
+      const refineText = refineInput ? refineInput.value.trim() : "";
+      if (!refineText) {
+        setStatus("Bitte eine Verfeinerung eingeben.", true);
+        return;
+      }
+      if (!lastYaml) {
+        setStatus("Bitte zuerst eine Automation generieren.", true);
+        return;
+      }
+
+      clearStatus();
+      setStatus("Automation wird verfeinert...", false);
+
+      try {
+        const response = await fetch("/api/automation/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ prompt: refineText, yaml: lastYaml, mode: "refine" })
+        });
+
+        if (!response.ok) {
+          throw new Error("Serverfehler: " + response.status);
+        }
+
+        const payload = await response.json();
+        if (!payload || !payload.ok) {
+          throw new Error(payload && payload.error ? payload.error : "Unbekannter Fehler");
+        }
+
+        titleEl.textContent = payload.title || "Automation";
+        messageEl.textContent = payload.message || "";
+        await ensureMonaco();
+        lastYaml = payload.yaml || "";
+        setYaml(lastYaml);
+        showResult();
+        setStatus("Fertig.", false);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unbekannter Fehler";
+        setStatus(message, true);
+      }
+    });
+  }
 })();

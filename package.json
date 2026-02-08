@@ -18,7 +18,8 @@
     "mongoose": "^9.1.5",
     "openai": "^4.104.0",
     "pug": "^3.0.3",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

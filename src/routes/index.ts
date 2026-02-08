@@ -1,4 +1,6 @@
 import { Router } from "express";
+import YAML from "yaml";
+import { getHomeAssistantApiConfig, saveAutomationConfig } from "../homeAssistant";
 import type { HomeAssistantClient } from "../homeAssistant";
 import { EntityModel } from "../models/Entity";
 import type { OpenRouterClient } from "../openRouter";
@@ -103,6 +105,8 @@ export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRo
 
   router.post("/api/automation/generate", async (req, res) => {
     const prompt = typeof req.body.prompt === "string" ? req.body.prompt.trim() : "";
+    const baseYaml = typeof req.body.yaml === "string" ? req.body.yaml.trim() : "";
+    const mode = typeof req.body.mode === "string" ? req.body.mode.trim() : "";
 
     if (!_openRouter) {
       res.status(400).json({ ok: false, error: "OpenRouter ist nicht konfiguriert. Bitte OPENROUTER_API_KEY setzen." });
@@ -125,6 +129,15 @@ export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRo
         2
       );
 
+      const refinementNote =
+        mode === "refine" && baseYaml
+          ? [
+              "Der Nutzer möchte eine bestehende Automation verfeinern.",
+              "Hier ist die aktuelle Automation (YAML):",
+              baseYaml
+            ].join("\n")
+          : null;
+
       const systemPrompt = [
         "Du bist ein Assistent für Home Assistant Automationen.",
         "Erstelle eine passende Automation basierend auf dem Nutzerwunsch und den Entitäten.",
@@ -132,8 +145,11 @@ export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRo
         '{"title":"...","message":"...","yaml":"..."}',
         "Nutze im YAML nur Entitäten aus den bereitgestellten Daten.",
         "Hier sind ALLE Entitäten aus der MongoDB im JSON-Format:",
-        systemPayload
-      ].join("\n");
+        systemPayload,
+        refinementNote
+      ]
+        .filter(Boolean)
+        .join("\n");
 
       const systemContent = _openRouter.cacheControl
         ? ([
@@ -174,6 +190,49 @@ export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRo
     }
   });
 
+  router.post("/api/automation/save", async (req, res) => {
+    const yaml = typeof req.body.yaml === "string" ? req.body.yaml.trim() : "";
+    const title = typeof req.body.title === "string" ? req.body.title.trim() : "";
+
+    if (!yaml) {
+      res.status(400).json({ ok: false, error: "Bitte YAML senden." });
+      return;
+    }
+
+    const apiConfig = getHomeAssistantApiConfig();
+    if (!apiConfig) {
+      res.status(400).json({ ok: false, error: "HA_TOKEN fehlt. Bitte in der Umgebung setzen." });
+      return;
+    }
+
+    let automationConfig: unknown;
+    try {
+      automationConfig = YAML.parse(yaml);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Ungültiges YAML";
+      res.status(400).json({ ok: false, error: message });
+      return;
+    }
+
+    if (!automationConfig || typeof automationConfig !== "object" || Array.isArray(automationConfig)) {
+      res.status(400).json({ ok: false, error: "YAML muss eine einzelne Automation (Objekt) enthalten." });
+      return;
+    }
+
+    const configWithAlias = automationConfig as Record<string, unknown>;
+    if (!configWithAlias.alias && title) {
+      configWithAlias.alias = title;
+    }
+
+    try {
+      const payload = await saveAutomationConfig(configWithAlias, apiConfig);
+      res.json({ ok: true, result: payload });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
+      res.status(500).json({ ok: false, error: message });
+    }
+  });
+
   router.get("/api/ha/status", async (_req, res) => {
     try {
       const status = await hass.status();
@@ -182,34 +241,6 @@ export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRo
       const message = err instanceof Error ? err.message : "Unknown Home Assistant error";
       res.status(500).json({ ok: false, error: message });
     }
-  });
-
-  router.post("/api/automation/mock", (_req, res) => {
-    res.json({
-      ok: true,
-      title: "Abendroutine: Fenster & Licht",
-      message:
-        "Ich habe eine Automation erstellt, die um 22:00 Uhr prüft, ob ein Fenster offen ist und dann das Licht im Flur einschaltet sowie eine Benachrichtigung sendet.",
-      yaml: `alias: Abendroutine Fenstercheck
-description: >
-  Prüft um 22:00 Uhr offene Fenster und schaltet das Flurlicht ein.
-trigger:
-  - platform: time
-    at: "22:00:00"
-condition:
-  - condition: state
-    entity_id: binary_sensor.window_living_room
-    state: "on"
-action:
-  - service: light.turn_on
-    target:
-      entity_id: light.hallway
-  - service: notify.mobile_app_phone
-    data:
-      title: "Fenster offen"
-      message: "Bitte das Wohnzimmerfenster schließen."
-mode: single`
-    });
   });
 
   return router;

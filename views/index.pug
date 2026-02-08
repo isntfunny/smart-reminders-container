@@ -2,11 +2,12 @@ extends layout
 
 block content
   main.container
-    h1 Smart Reminders
-    p Express + Pug + MongoDB + Home Assistant
-    .card
-      h2 Automation Builder
-      p Formuliere eine Anforderung und erhalte eine Home Assistant Automation im YAML-Format.
+    .hero
+      .hero-text
+        h1 Automation Builder
+        p Formuliere eine Anforderung und erhalte sofort eine Home Assistant Automation als YAML.
+      .hero-badge Smart Reminders
+    .card.builder
       form#automationForm.prompt-form
         label(for="automationPrompt") Automation Wunsch
         .prompt-row
@@ -14,7 +15,16 @@ block content
           button(type="submit") Generieren
       p#automationStatus.results-info.is-hidden
       .prompt-output#automationResult.is-hidden
-        h3#automationTitle
-        p#automationMessage
+        .result-header
+          .result-text
+            h3#automationTitle
+            p#automationMessage
+          .result-actions
+            button#clearAutomation(type="button") Clear
         .editor-shell
           #automationEditor.editor
+        .refine-box
+          label(for="automationRefine") Verfeinern / Rückfragen
+          .refine-row
+            input#automationRefine(type="text" name="refine" placeholder="z.B. nur werktags, Push aufs iPhone" autocomplete="off")
+            button#refineAutomation(type="button") Verfeinern
