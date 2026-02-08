@@ -17,8 +17,8 @@ export function createOpenRouterClient(): OpenRouterClient | null {
     return null;
   }
 
-  const model = process.env.OPENROUTER_MODEL || "openrouter/auto";
-  const maxTokens = Number(process.env.OPENROUTER_MAX_TOKENS || 200);
+  const model = process.env.OPENROUTER_MODEL || "google/gemini-3-flash-preview";
+  const maxTokens = Number(process.env.OPENROUTER_MAX_TOKENS || 2400);
   const temperature = Number(process.env.OPENROUTER_TEMPERATURE || 0.2);
   const cacheControlType = process.env.OPENROUTER_CACHE_CONTROL_TYPE;
   const cacheControlTtl = process.env.OPENROUTER_CACHE_CONTROL_TTL;
