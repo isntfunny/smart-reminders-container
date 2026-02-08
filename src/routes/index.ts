@@ -7,7 +7,47 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function createIndexRouter(hass: HomeAssistantClient, openRouter: OpenRouterClient | null): Router {
+type AutomationResponse = {
+  title: string;
+  message: string;
+  yaml: string;
+};
+
+function parseAutomationResponse(content: string): AutomationResponse | null {
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as AutomationResponse;
+    if (parsed && parsed.title && parsed.message && parsed.yaml) {
+      return parsed;
+    }
+  } catch {
+    // fall through to extraction
+  }
+
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    return null;
+  }
+
+  const jsonSlice = trimmed.slice(firstBrace, lastBrace + 1);
+  try {
+    const parsed = JSON.parse(jsonSlice) as AutomationResponse;
+    if (parsed && parsed.title && parsed.message && parsed.yaml) {
+      return parsed;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRouterClient | null): Router {
   const router = Router();
 
   async function getBaseViewData(entityQuery: string) {
@@ -45,52 +85,93 @@ export function createIndexRouter(hass: HomeAssistantClient, openRouter: OpenRou
       error,
       entityQuery,
       entities,
-      openRouterEnabled: Boolean(openRouter)
+      openRouterEnabled: false
     };
   }
 
   router.get("/", async (req, res) => {
-    const entityQuery = typeof req.query.q === "string" ? req.query.q.trim() : "";
-    const baseData = await getBaseViewData(entityQuery);
-
     res.render("index", {
-      ...baseData,
-      openRouterPrompt: "",
-      openRouterResponse: null,
-      openRouterError: null
+      title: "Smart Reminders"
     });
   });
 
-  router.post("/openrouter", async (req, res) => {
-    const prompt = typeof req.body.prompt === "string" ? req.body.prompt.trim() : "";
-    const baseData = await getBaseViewData("");
-    let openRouterResponse: string | null = null;
-    let openRouterError: string | null = null;
+  router.get("/entities", async (req, res) => {
+    const entityQuery = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    const baseData = await getBaseViewData(entityQuery);
+    res.render("entities", baseData);
+  });
 
-    if (!openRouter) {
-      openRouterError = "OpenRouter ist nicht konfiguriert. Bitte OPENROUTER_API_KEY setzen.";
-    } else if (!prompt) {
-      openRouterError = "Bitte eine Nachricht eingeben.";
-    } else {
-      try {
-        const completion = await openRouter.client.chat.completions.create({
-          model: openRouter.model,
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: openRouter.maxTokens,
-          temperature: openRouter.temperature
-        });
-        openRouterResponse = completion.choices[0]?.message?.content?.trim() || null;
-      } catch (err) {
-        openRouterError = err instanceof Error ? err.message : "Unbekannter OpenRouter Fehler";
-      }
+  router.post("/api/automation/generate", async (req, res) => {
+    const prompt = typeof req.body.prompt === "string" ? req.body.prompt.trim() : "";
+
+    if (!_openRouter) {
+      res.status(400).json({ ok: false, error: "OpenRouter ist nicht konfiguriert. Bitte OPENROUTER_API_KEY setzen." });
+      return;
     }
 
-    res.render("index", {
-      ...baseData,
-      openRouterPrompt: prompt,
-      openRouterResponse,
-      openRouterError
-    });
+    if (!prompt) {
+      res.status(400).json({ ok: false, error: "Bitte eine Automation beschreiben." });
+      return;
+    }
+
+    try {
+      const entities = await EntityModel.find({}).sort({ lastSeen: -1 }).lean().exec();
+      const systemPayload = JSON.stringify(
+        {
+          generatedAt: new Date().toISOString(),
+          entities
+        },
+        null,
+        2
+      );
+
+      const systemPrompt = [
+        "Du bist ein Assistent für Home Assistant Automationen.",
+        "Erstelle eine passende Automation basierend auf dem Nutzerwunsch und den Entitäten.",
+        "Antworte ausschließlich mit einem JSON-Objekt im Format:",
+        '{"title":"...","message":"...","yaml":"..."}',
+        "Nutze im YAML nur Entitäten aus den bereitgestellten Daten.",
+        "Hier sind ALLE Entitäten aus der MongoDB im JSON-Format:",
+        systemPayload
+      ].join("\n");
+
+      const systemContent = _openRouter.cacheControl
+        ? [
+            {
+              type: "text",
+              text: systemPrompt,
+              cache_control: _openRouter.cacheControl
+            }
+          ]
+        : systemPrompt;
+
+      const completion = await _openRouter.client.chat.completions.create({
+        model: _openRouter.model,
+        messages: [
+          { role: "system", content: systemContent },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: _openRouter.maxTokens,
+        temperature: _openRouter.temperature
+      });
+
+      const content = completion.choices[0]?.message?.content ?? "";
+      const parsed = parseAutomationResponse(content);
+
+      if (!parsed) {
+        res.status(502).json({
+          ok: false,
+          error: "Antwort konnte nicht als JSON mit title/message/yaml geparst werden."
+        });
+        return;
+      }
+
+      const usage = completion.usage ?? null;
+      res.json({ ok: true, ...parsed, usage });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
+      res.status(500).json({ ok: false, error: message });
+    }
   });
 
   router.get("/api/ha/status", async (_req, res) => {

@@ -5,6 +5,10 @@ export type OpenRouterClient = {
   model: string;
   maxTokens: number;
   temperature: number;
+  cacheControl?: {
+    type: "ephemeral";
+    ttl?: string;
+  };
 };
 
 export function createOpenRouterClient(): OpenRouterClient | null {
@@ -16,6 +20,8 @@ export function createOpenRouterClient(): OpenRouterClient | null {
   const model = process.env.OPENROUTER_MODEL || "openrouter/auto";
   const maxTokens = Number(process.env.OPENROUTER_MAX_TOKENS || 200);
   const temperature = Number(process.env.OPENROUTER_TEMPERATURE || 0.2);
+  const cacheControlType = process.env.OPENROUTER_CACHE_CONTROL_TYPE;
+  const cacheControlTtl = process.env.OPENROUTER_CACHE_CONTROL_TTL;
   const siteUrl = process.env.OPENROUTER_SITE_URL;
   const siteName = process.env.OPENROUTER_SITE_NAME;
   const defaultHeaders: Record<string, string> = {};
@@ -34,10 +40,19 @@ export function createOpenRouterClient(): OpenRouterClient | null {
     defaultHeaders
   });
 
+  const cacheControl =
+    cacheControlType === "ephemeral"
+      ? {
+          type: "ephemeral" as const,
+          ttl: cacheControlTtl || undefined
+        }
+      : undefined;
+
   return {
     client,
     model,
     maxTokens,
-    temperature
+    temperature,
+    cacheControl
   };
 }

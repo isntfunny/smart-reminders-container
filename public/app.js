@@ -87,7 +87,7 @@
     setStatus("Automation wird generiert...", false);
 
     try {
-      const response = await fetch("/api/automation/mock", {
+      const response = await fetch("/api/automation/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

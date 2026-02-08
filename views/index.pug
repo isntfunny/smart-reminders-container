@@ -5,47 +5,6 @@ block content
     h1 Smart Reminders
     p Express + Pug + MongoDB + Home Assistant
     .card
-      h2 MongoDB Entity Viewer
-      form.search-form(method="get" action="/")
-        label(for="entityQuery") Entity suchen
-        .search-row
-          input#entityQuery(type="text" name="q" placeholder="z.B. light.kitchen" value=entityQuery)
-          button(type="submit") Suchen
-      if entityQuery
-        if entities.length
-          p.results-info #{entities.length} Treffer für "#{entityQuery}"
-          each entity in entities
-            .entity-card
-              .entity-header
-                h3= entity.entityId
-                span.badge= entity.domain
-              p
-                strong State:
-                |  #{entity.state || "null"}
-              p
-                strong Last seen:
-                |  #{new Date(entity.lastSeen).toLocaleString("de-DE")}
-              if entity.attributes
-                pre= JSON.stringify(entity.attributes, null, 2)
-        else
-          p.results-info Keine Treffer für "#{entityQuery}".
-    .card
-      h2 OpenRouter Prompt
-      if !openRouterEnabled
-        p Bitte OPENROUTER_API_KEY setzen, um OpenRouter zu nutzen.
-      else
-        form.prompt-form(method="post" action="/openrouter")
-          label(for="promptInput") Nachricht an OpenRouter
-          .prompt-row
-            input#promptInput(type="text" name="prompt" placeholder="z.B. Erstelle eine Erinnerung für morgen 9 Uhr" value=openRouterPrompt)
-            button(type="submit") Senden
-        if openRouterError
-          p.results-info= openRouterError
-        else if openRouterResponse
-          .prompt-output
-            h3 Antwort
-            p= openRouterResponse
-    .card
       h2 Automation Builder
       p Formuliere eine Anforderung und erhalte eine Home Assistant Automation im YAML-Format.
       form#automationForm.prompt-form
@@ -59,15 +18,3 @@ block content
         p#automationMessage
         .editor-shell
           #automationEditor.editor
-    if error
-      .card.error
-        h2 Home Assistant Fehler
-        p= error
-    else if status
-      .card
-        h2 Home Assistant Status
-        pre= JSON.stringify(status, null, 2)
-    else
-      .card
-        h2 Home Assistant Status
-        p Noch keine Daten.
