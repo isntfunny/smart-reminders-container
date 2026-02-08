@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { z } from "zod";
+import { zodTextFormat } from "openai/helpers/zod";
 import YAML from "yaml";
 import { getHomeAssistantApiConfig, saveAutomationConfig } from "../homeAssistant";
 import type { HomeAssistantClient } from "../homeAssistant";
@@ -15,6 +17,12 @@ type AutomationResponse = {
   yaml: string;
 };
 
+const AutomationResponseSchema = z.object({
+  title: z.string(),
+  message: z.string(),
+  yaml: z.string()
+});
+
 function parseAutomationResponse(content: string): AutomationResponse | null {
   const trimmed = content.trim();
   if (!trimmed) {
@@ -22,9 +30,10 @@ function parseAutomationResponse(content: string): AutomationResponse | null {
   }
 
   try {
-    const parsed = JSON.parse(trimmed) as AutomationResponse;
-    if (parsed && parsed.title && parsed.message && parsed.yaml) {
-      return parsed;
+    const parsed = JSON.parse(trimmed);
+    const result = AutomationResponseSchema.safeParse(parsed);
+    if (result.success) {
+      return result.data;
     }
   } catch {
     // fall through to extraction
@@ -33,17 +42,42 @@ function parseAutomationResponse(content: string): AutomationResponse | null {
   const firstBrace = trimmed.indexOf("{");
   const lastBrace = trimmed.lastIndexOf("}");
   if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
-    return null;
+    // fall through to code block / yaml parsing
+  } else {
+    const jsonSlice = trimmed.slice(firstBrace, lastBrace + 1);
+    try {
+      const parsed = JSON.parse(jsonSlice);
+      const result = AutomationResponseSchema.safeParse(parsed);
+      if (result.success) {
+        return result.data;
+      }
+    } catch {
+      // fall through to code block / yaml parsing
+    }
   }
 
-  const jsonSlice = trimmed.slice(firstBrace, lastBrace + 1);
-  try {
-    const parsed = JSON.parse(jsonSlice) as AutomationResponse;
-    if (parsed && parsed.title && parsed.message && parsed.yaml) {
-      return parsed;
+  const codeBlockMatch = trimmed.match(/```(?:json|yaml)?\s*([\s\S]*?)\s*```/i);
+  const candidates = [codeBlockMatch?.[1], trimmed].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate);
+      const result = AutomationResponseSchema.safeParse(parsed);
+      if (result.success) {
+        return result.data;
+      }
+    } catch {
+      // ignore
     }
-  } catch {
-    return null;
+    try {
+      const parsed = YAML.parse(candidate);
+      const result = AutomationResponseSchema.safeParse(parsed);
+      if (result.success) {
+        return result.data;
+      }
+    } catch {
+      // ignore
+    }
   }
 
   return null;
@@ -143,6 +177,8 @@ export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRo
         "Erstelle eine passende Automation basierend auf dem Nutzerwunsch und den Entitäten.",
         "Antworte ausschließlich mit einem JSON-Objekt im Format:",
         '{"title":"...","message":"...","yaml":"..."}',
+        "Kein Markdown, keine Codeblöcke.",
+        "Das Feld \"yaml\" ist ein String und nutzt \\n für Zeilenumbrüche.",
         "Nutze im YAML nur Entitäten aus den bereitgestellten Daten.",
         "Hier sind ALLE Entitäten aus der MongoDB im JSON-Format:",
         systemPayload,
@@ -151,28 +187,18 @@ export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRo
         .filter(Boolean)
         .join("\n");
 
-      const systemContent = _openRouter.cacheControl
-        ? ([
-            {
-              type: "text" as const,
-              text: systemPrompt,
-              cache_control: _openRouter.cacheControl
-            }
-          ] as any)
-        : systemPrompt;
-
-      const completion = await _openRouter.client.chat.completions.create({
+      const completion = await _openRouter.client.responses.parse({
         model: _openRouter.model,
-        messages: [
-          { role: "system", content: systemContent as any },
+        input: [
+          { role: "system", content: systemPrompt },
           { role: "user", content: prompt }
         ],
-        max_tokens: _openRouter.maxTokens,
+        text: { format: zodTextFormat(AutomationResponseSchema, "automation") },
+        max_output_tokens: _openRouter.maxTokens,
         temperature: _openRouter.temperature
       });
 
-      const content = completion.choices[0]?.message?.content ?? "";
-      const parsed = parseAutomationResponse(content);
+      const parsed = completion.output_parsed ?? parseAutomationResponse(completion.output_text ?? "");
 
       if (!parsed) {
         res.status(502).json({
