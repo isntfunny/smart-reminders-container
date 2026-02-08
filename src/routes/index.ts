@@ -136,19 +136,19 @@ export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRo
       ].join("\n");
 
       const systemContent = _openRouter.cacheControl
-        ? [
+        ? ([
             {
-              type: "text",
+              type: "text" as const,
               text: systemPrompt,
               cache_control: _openRouter.cacheControl
             }
-          ]
+          ] as any)
         : systemPrompt;
 
       const completion = await _openRouter.client.chat.completions.create({
         model: _openRouter.model,
         messages: [
-          { role: "system", content: systemContent },
+          { role: "system", content: systemContent as any },
           { role: "user", content: prompt }
         ],
         max_tokens: _openRouter.maxTokens,
