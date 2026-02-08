@@ -1,0 +1,39 @@
+name: "Smart Reminders"
+version: "0.1.0"
+slug: smart_reminders
+description: "Smart reminders container with AI-powered automation creation for Home Assistant"
+url: "https://github.com/anomalyco/smart-reminders-container"
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+startup: application
+boot: auto
+init: false
+ports:
+  "3000/tcp": 3000
+map:
+  - "share:rw"
+options:
+  mongo_url: "mongodb://localhost:27017/smart_reminders"
+  ha_url: "http://homeassistant:8123"
+  ha_token: ""
+  openrouter_api_key: ""
+  openrouter_model: "google/gemini-3-flash-preview"
+  openrouter_max_tokens: 2400
+  openrouter_temperature: 0.2
+schema:
+  mongo_url: str
+  ha_url: str
+  ha_token: str
+  openrouter_api_key: str?
+  openrouter_model: str?
+  openrouter_max_tokens: int?
+  openrouter_temperature: float?
+  openrouter_cache_control_type: str?
+  openrouter_cache_control_ttl: str?
+  openrouter_site_url: str?
+  openrouter_site_name: str?
+image: "ghcr.io/anomalyco/{arch}-smart-reminders"
