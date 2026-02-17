@@ -1,14 +1,12 @@
 #!/usr/bin/env bashio
-set -e
 
 export MONGO_URL="mongodb://smart_reminder_db:27017/smart_reminders"
 
-export HA_URL="${HA_URL:-http://supervisor/core}"
-export HA_TOKEN="${HA_TOKEN:-${SUPERVISOR_TOKEN}}"
+HA_URL="${HA_URL:-http://supervisor/core}"
+HA_TOKEN="${HA_TOKEN:-${SUPERVISOR_TOKEN}}"
 
-if [ -z "$HA_TOKEN" ]; then
-  bashio::log.warning "SUPERVISOR_TOKEN not set, HA_TOKEN may be empty"
-fi
+export HA_URL
+export HA_TOKEN
 
 if bashio::config.exists 'openrouter_api_key' 2>/dev/null; then
   export OPENROUTER_API_KEY=$(bashio::config 'openrouter_api_key')
@@ -20,8 +18,11 @@ if bashio::config.exists 'openrouter_api_key' 2>/dev/null; then
   export OPENROUTER_SITE_URL=$(bashio::config 'openrouter_site_url')
   export OPENROUTER_SITE_NAME=$(bashio::config 'openrouter_site_name')
 else
-  bashio::log.info "Not running as HA Add-on, using environment variables"
+  export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-}"
+  export OPENROUTER_MODEL="${OPENROUTER_MODEL:-google/gemini-3-flash-preview}"
+  export OPENROUTER_MAX_TOKENS="${OPENROUTER_MAX_TOKENS:-2400}"
+  export OPENROUTER_TEMPERATURE="${OPENROUTER_TEMPERATURE:-0.2}"
 fi
 
-bashio::log.info "Starting Smart Reminders..."
+bashio::log.info "Starting Smart Reminders with HA at ${HA_URL}"
 exec node /usr/src/app/dist/index.js
