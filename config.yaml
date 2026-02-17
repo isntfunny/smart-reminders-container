@@ -1,5 +1,5 @@
 name: "Smart Reminders"
-version: "0.2.1"
+version: "0.2.2"
 slug: smart_reminders
 description: "Smart reminders container with AI-powered automation creation for Home Assistant"
 url: "https://github.com/isntfunny/smart-reminders-container"
