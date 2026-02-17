@@ -1,11 +1,8 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.18
 FROM $BUILD_FROM
 
-# Install Node.js, MongoDB and other dependencies
-RUN apk add --no-cache nodejs npm curl mongodb
-
-# Create MongoDB data directory
-RUN mkdir -p /data/db && chmod 755 /data/db
+# Install Node.js and other dependencies
+RUN apk add --no-cache nodejs npm curl
 
 # Set working directory
 WORKDIR /usr/src/app
