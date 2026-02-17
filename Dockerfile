@@ -1,9 +1,9 @@
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.18
 FROM $BUILD_FROM
 
 LABEL io.hass.version="0.1.0" io.hass.type="addon" io.hass.arch="aarch64|amd64|armhf|armv7|i386"
 
-ENV LANG C.UTF-8
+ENV LANG=C.UTF-8
 
 # Install Node.js, MongoDB and other dependencies
 RUN apk add --no-cache nodejs npm curl mongodb bash jq
