@@ -14,18 +14,15 @@ boot: auto
 init: false
 ingress: true
 ingress_port: 3000
+homeassistant_api: true
 map:
   - "share:rw"
 options:
-  ha_url: "http://homeassistant:8123"
-  ha_token: ""
   openrouter_api_key: ""
   openrouter_model: "google/gemini-3-flash-preview"
   openrouter_max_tokens: 2400
   openrouter_temperature: 0.2
 schema:
-  ha_url: str
-  ha_token: str
   openrouter_api_key: str?
   openrouter_model: str?
   openrouter_max_tokens: int?

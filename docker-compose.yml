@@ -7,8 +7,8 @@ services:
       NODE_ENV: "production"
       PORT: "3000"
       MONGO_URL: "mongodb://smart_reminder_db:27017/smart_reminders"
-      HA_URL: "${HA_URL}"
-      HA_TOKEN: "${HA_TOKEN}"
+      HA_URL: "http://supervisor/core"
+      HA_TOKEN: "${SUPERVISOR_TOKEN}"
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:3000/"]
       interval: 30s

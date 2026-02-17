@@ -1,6 +1,17 @@
 # Smart Reminders - Home Assistant Add-on
 
+**⚠️ Dies ist eine experimentelle Version!**
+
 AI-powered smart reminders and automation creation for Home Assistant.
+
+## ⚠️ Warnung
+
+Dieses Add-on befindet sich in der **experimentellen Phase**. Es kann zu Problemen führen:
+- Datenverlust
+- Unerwartetes Verhalten
+- Sicherheitslücken
+
+**Verwendung auf eigenes Risiko!**
 
 ## Installation
 
@@ -24,28 +35,14 @@ AI-powered smart reminders and automation creation for Home Assistant.
 
 ## Konfiguration
 
-### Erforderliche Einstellungen
-
-- **ha_url**: Home Assistant URL (Standard: `http://homeassistant:8123`)
-- **ha_token**: Dein Home Assistant Long-Lived Access Token
-
 ### Optionale Einstellungen
 
-- **mongo_url**: MongoDB Verbindungs-URL (Standard: `mongodb://localhost:27017/smart_reminders`)
-  - In der Regel nicht ändern, MongoDB läuft im Add-on
-- **openrouter_api_key**: API Key für OpenRouter (für AI-Funktionen)
+Alle Einstellungen sind optional. Home Assistant URL und Token werden automatisch bereitgestellt.
 
+- **openrouter_api_key**: API Key für OpenRouter (für AI-Funktionen)
 - **openrouter_model**: AI Modell (Standard: `google/gemini-3-flash-preview`)
 - **openrouter_max_tokens**: Maximale Tokens (Standard: `2400`)
 - **openrouter_temperature**: Temperatur für AI (Standard: `0.2`)
-
-### Home Assistant Token erstellen
-
-1. Gehe zu deinem Home Assistant Profil (unten links auf deinen Namen klicken)
-2. Scrolle zu **Long-Lived Access Tokens**
-3. Klicke auf **Token erstellen**
-4. Gib einen Namen ein (z.B. "Smart Reminders")
-5. Kopiere den Token und füge ihn in die Add-on Konfiguration ein
 
 ## Verwendung
 
