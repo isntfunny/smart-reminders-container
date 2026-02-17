@@ -10,7 +10,7 @@ AI-powered smart reminders and automation creation for Home Assistant.
 2. Klicke auf das **⋮** Menü oben rechts und wähle **Repositories**
 3. Füge diese URL hinzu:
    ```
-   https://github.com/anomalyco/smart-reminders-container
+   https://github.com/isntfunny/smart-reminders-container
    ```
 4. Klicke auf **Hinzufügen** und dann **Schließen**
 5. Das "Smart Reminders" Add-on sollte nun im Store erscheinen
@@ -65,4 +65,4 @@ Oder über die **Open Web UI** Schaltfläche im Add-on.
 ## Support
 
 Bei Problemen oder Fragen, erstelle ein Issue auf GitHub:
-https://github.com/anomalyco/smart-reminders-container/issues
+https://github.com/isntfunny/smart-reminders-container/issues

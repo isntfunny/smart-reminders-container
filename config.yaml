@@ -2,7 +2,7 @@ name: "Smart Reminders"
 version: "0.1.0"
 slug: smart_reminders
 description: "Smart reminders container with AI-powered automation creation for Home Assistant"
-url: "https://github.com/anomalyco/smart-reminders-container"
+url: "https://github.com/isntfunny/smart-reminders-container"
 arch:
   - aarch64
   - amd64
