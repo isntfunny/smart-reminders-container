@@ -1,5 +1,5 @@
 name: "Smart Reminders"
-version: "0.1.1"
+version: "0.1.2"
 slug: smart_reminders
 description: "Smart reminders container with AI-powered automation creation for Home Assistant"
 url: "https://github.com/isntfunny/smart-reminders-container"
@@ -12,8 +12,8 @@ arch:
 startup: application
 boot: auto
 init: false
-ports:
-  "3000/tcp": 3000
+ingress: true
+ingress_port: 3000
 map:
   - "share:rw"
 options:
