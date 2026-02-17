@@ -1,5 +1,7 @@
 #!/usr/bin/env bashio
 
+bashio::log.info "ENV DUMP: $(env | tr ' ' '\n' | head -50)"
+
 export MONGO_URL="mongodb://smart_reminder_db:27017/smart_reminders"
 
 HA_URL="${HA_URL:-http://supervisor/core}"
