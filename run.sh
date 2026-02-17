@@ -25,4 +25,5 @@ else
 fi
 
 bashio::log.info "Starting Smart Reminders with HA at ${HA_URL}"
+bashio::log.info "Environment: MONGO_URL=${MONGO_URL}, HA_URL=${HA_URL}, HA_TOKEN_SET=${HA_TOKEN:+yes}, OPENROUTER_MODEL=${OPENROUTER_MODEL}"
 exec node /usr/src/app/dist/index.js
