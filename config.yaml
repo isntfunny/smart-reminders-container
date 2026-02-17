@@ -36,4 +36,3 @@ schema:
   openrouter_cache_control_ttl: str?
   openrouter_site_url: str?
   openrouter_site_name: str?
-image: "ghcr.io/anomalyco/{arch}-smart-reminders"

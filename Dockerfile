@@ -1,8 +1,12 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
+LABEL io.hass.version="0.1.0" io.hass.type="addon" io.hass.arch="aarch64|amd64|armhf|armv7|i386"
+
+ENV LANG C.UTF-8
+
 # Install Node.js, MongoDB and other dependencies
-RUN apk add --no-cache nodejs npm curl mongodb
+RUN apk add --no-cache nodejs npm curl mongodb bash jq
 
 # Create MongoDB data directory
 RUN mkdir -p /data/db && chmod 755 /data/db
