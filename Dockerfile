@@ -13,11 +13,17 @@ WORKDIR /usr/src/app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including devDependencies for TypeScript)
+RUN npm ci
 
-# Copy app source
-COPY dist ./dist
+# Copy source and config
+COPY tsconfig.json ./
+COPY src ./src
+
+# Build TypeScript -> dist
+RUN npm run build
+
+# Copy views and public (already ready)
 COPY views ./views
 COPY public ./public
 
