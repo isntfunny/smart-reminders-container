@@ -15,15 +15,16 @@ RUN mkdir -p /data/db && chmod 755 /data/db
 WORKDIR /usr/src/app
 
 # Copy package files
-COPY package*.json ./
+COPY package*.json tsconfig.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including devDeps for TypeScript)
+RUN npm ci
 
-# Copy app source
-COPY dist ./dist
+# Copy source code and build
+COPY src ./src
 COPY views ./views
 COPY public ./public
+RUN npm run build
 
 # Copy start script
 COPY run.sh /
