@@ -45,12 +45,19 @@ if (hassioOptions.openrouter_cache_control_ttl) process.env.OPENROUTER_CACHE_CON
 if (hassioOptions.openrouter_site_url) process.env.OPENROUTER_SITE_URL = hassioOptions.openrouter_site_url;
 if (hassioOptions.openrouter_site_name) process.env.OPENROUTER_SITE_NAME = hassioOptions.openrouter_site_name;
 
+// Get ingress path from HA header
+const ingressPath = process.env.ingress_path || "";
+
 app.set("views", path.join(__dirname, "..", "views"));
 app.set("view engine", "pug");
 
+// Serve static files both at root (for direct access) and at ingress path
 app.use(express.static(path.join(__dirname, "..", "public")));
+app.use(ingressPath, express.static(path.join(__dirname, "..", "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(ingressPath, express.json());
+app.use(ingressPath, express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
   const startedAt = Date.now();
   res.on("finish", () => {
@@ -64,7 +71,12 @@ app.use((req, res, next) => {
 
 const hass = createHomeAssistantClient();
 const openRouter = createOpenRouterClient();
-app.use("/", createIndexRouter(hass, openRouter));
+const indexRouter = createIndexRouter(hass, openRouter);
+if (ingressPath) {
+  app.use(ingressPath, indexRouter);
+} else {
+  app.use(indexRouter);
+}
 
 async function start() {
   try {

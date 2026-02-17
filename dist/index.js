@@ -55,11 +55,17 @@ if (hassioOptions.openrouter_site_url)
     process.env.OPENROUTER_SITE_URL = hassioOptions.openrouter_site_url;
 if (hassioOptions.openrouter_site_name)
     process.env.OPENROUTER_SITE_NAME = hassioOptions.openrouter_site_name;
+// Get ingress path from HA header
+const ingressPath = process.env.ingress_path || "";
 app.set("views", path_1.default.join(__dirname, "..", "views"));
 app.set("view engine", "pug");
+// Serve static files both at root (for direct access) and at ingress path
 app.use(express_1.default.static(path_1.default.join(__dirname, "..", "public")));
+app.use(ingressPath, express_1.default.static(path_1.default.join(__dirname, "..", "public")));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use(ingressPath, express_1.default.json());
+app.use(ingressPath, express_1.default.urlencoded({ extended: true }));
 app.use((req, res, next) => {
     const startedAt = Date.now();
     res.on("finish", () => {
@@ -72,7 +78,13 @@ app.use((req, res, next) => {
 });
 const hass = (0, homeAssistant_1.createHomeAssistantClient)();
 const openRouter = (0, openRouter_1.createOpenRouterClient)();
-app.use("/", (0, index_1.createIndexRouter)(hass, openRouter));
+const indexRouter = (0, index_1.createIndexRouter)(hass, openRouter);
+if (ingressPath) {
+    app.use(ingressPath, indexRouter);
+}
+else {
+    app.use(indexRouter);
+}
 async function start() {
     try {
         await mongoose_1.default.connect(mongoUrl);
