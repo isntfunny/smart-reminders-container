@@ -17,7 +17,6 @@ ports:
 map:
   - "share:rw"
 options:
-  mongo_url: "mongodb://localhost:27017/smart_reminders"
   ha_url: "http://homeassistant:8123"
   ha_token: ""
   openrouter_api_key: ""
@@ -25,7 +24,6 @@ options:
   openrouter_max_tokens: 2400
   openrouter_temperature: 0.2
 schema:
-  mongo_url: str
   ha_url: str
   ha_token: str
   openrouter_api_key: str?

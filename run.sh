@@ -1,8 +1,10 @@
 #!/usr/bin/env bashio
 set -e
 
+# Set fixed MongoDB URL (external container)
+export MONGO_URL="mongodb://localhost:27017/smart_reminders"
+
 # Export environment variables from add-on options
-export MONGO_URL=$(bashio::config 'mongo_url')
 export HA_URL=$(bashio::config 'ha_url')
 export HA_TOKEN=$(bashio::config 'ha_token')
 export OPENROUTER_API_KEY=$(bashio::config 'openrouter_api_key')
