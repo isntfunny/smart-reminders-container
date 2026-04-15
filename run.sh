@@ -2,6 +2,15 @@
 set -e
 
 HA_URL="${HA_URL:-http://supervisor/core}"
+
+# s6-overlay stores env vars as files; bashio does not forward them to exec'd
+# subprocesses, so we read SUPERVISOR_TOKEN directly from the filesystem.
+S6_ENV_DIR="/run/s6/container_environment"
+if [ -z "${SUPERVISOR_TOKEN:-}" ] && [ -f "${S6_ENV_DIR}/SUPERVISOR_TOKEN" ]; then
+  SUPERVISOR_TOKEN="$(cat "${S6_ENV_DIR}/SUPERVISOR_TOKEN")"
+fi
+export SUPERVISOR_TOKEN
+
 HA_TOKEN="${HA_TOKEN:-${SUPERVISOR_TOKEN:-}}"
 export HA_URL HA_TOKEN
 
