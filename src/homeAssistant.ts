@@ -1,47 +1,69 @@
-import HomeAssistant from "homeassistant";
 import { logger } from "./logger";
 
-export type HomeAssistantClient = HomeAssistant;
-
-export function createHomeAssistantClient(): HomeAssistantClient {
-  const haUrl = process.env.HA_URL || "http://localhost:8123";
-  const token = process.env.HA_TOKEN;
-
-  const parsed = new URL(haUrl);
-  const host = `${parsed.protocol}//${parsed.hostname}`;
-  const port = parsed.port ? Number(parsed.port) : 8123;
-  const ignoreCert = parsed.protocol === "https:" && parsed.hostname === "localhost";
-
-  logger.info("Home Assistant client configured for %s:%d", host, port);
-
-  return new HomeAssistant({
-    host,
-    port,
-    token,
-    ignoreCert
-  });
-}
+export type HomeAssistantClient = {
+  status: () => Promise<unknown>;
+  states: {
+    list: () => Promise<unknown[]>;
+  };
+};
 
 export type HomeAssistantApiConfig = {
   baseUrl: string;
   token: string;
 };
 
+function resolveBase(): { baseUrl: string; token: string | null } {
+  const raw = process.env.HA_URL || "http://supervisor/core";
+  const baseUrl = raw.replace(/\/+$/, "");
+  const token = process.env.HA_TOKEN || null;
+  return { baseUrl, token };
+}
+
+async function haFetch(path: string): Promise<unknown> {
+  const { baseUrl, token } = resolveBase();
+  if (!token) {
+    throw new Error("HA_TOKEN / SUPERVISOR_TOKEN is not set");
+  }
+
+  const response = await fetch(`${baseUrl}${path}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Home Assistant API ${path} returned ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export function createHomeAssistantClient(): HomeAssistantClient {
+  const { baseUrl, token } = resolveBase();
+  logger.info(
+    "Home Assistant client configured for %s (token=%s)",
+    baseUrl,
+    token ? "set" : "missing"
+  );
+
+  return {
+    status: () => haFetch("/api/"),
+    states: {
+      list: async () => {
+        const result = await haFetch("/api/states");
+        if (!Array.isArray(result)) {
+          throw new Error("Home Assistant /api/states returned non-array");
+        }
+        return result as unknown[];
+      }
+    }
+  };
+}
+
 export function getHomeAssistantApiConfig(): HomeAssistantApiConfig | null {
-  const haUrl = process.env.HA_URL || "http://localhost:8123";
-  const token = process.env.HA_TOKEN;
+  const { baseUrl, token } = resolveBase();
   if (!token) {
     return null;
   }
-
-  const parsed = new URL(haUrl);
-  const host = `${parsed.protocol}//${parsed.hostname}`;
-  const port = parsed.port ? Number(parsed.port) : 8123;
-
-  return {
-    baseUrl: `${host}:${port}`,
-    token
-  };
+  return { baseUrl, token };
 }
 
 export async function saveAutomationConfig(
