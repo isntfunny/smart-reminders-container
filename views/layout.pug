@@ -10,7 +10,9 @@ html(lang="de")
     link(rel="preconnect" href="https://fonts.gstatic.com" crossorigin)
     link(rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono&display=swap")
     link(rel="stylesheet" href="styles.css")
+    block head
   body
     block content
-    script(src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/loader.min.js")
-    script(src="app.js")
+    block scripts
+      script(src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/loader.min.js")
+      script(src="app.js")

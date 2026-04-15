@@ -1,5 +1,5 @@
 name: "Smart Reminders"
-version: "0.4.5"
+version: "0.4.6"
 slug: smart_reminders
 description: "Smart reminders with AI-powered automations for Home Assistant (bundled MongoDB 8)"
 url: "https://github.com/isntfunny/smart-reminders-container"

@@ -1,7 +1,7 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-debian:bookworm
 FROM $BUILD_FROM
 
-LABEL io.hass.version="0.4.5" io.hass.type="addon" io.hass.arch="aarch64|amd64"
+LABEL io.hass.version="0.4.6" io.hass.type="addon" io.hass.arch="aarch64|amd64"
 
 ENV LANG=C.UTF-8 \
     DEBIAN_FRONTEND=noninteractive

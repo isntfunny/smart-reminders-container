@@ -298,7 +298,184 @@ button.secondary:hover {
   display: none !important;
 }
 
-/* ── Entity cards ──────────────────────────────────── */
+/* ── Entity toolbar ────────────────────────────────── */
+.entity-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.entity-toolbar .search-row {
+  flex: 1;
+}
+
+.entity-toolbar .results-info {
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* ── Tabulator overrides (Lovelace theme) ───────────── */
+#entity-table .tabulator {
+  background: var(--card-background);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-control);
+  font-family: "Roboto", "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--primary-text);
+}
+
+#entity-table .tabulator .tabulator-header {
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--divider);
+  border-radius: var(--radius-control) var(--radius-control) 0 0;
+}
+
+#entity-table .tabulator .tabulator-header .tabulator-col {
+  background: transparent;
+  border-right: 1px solid var(--divider);
+  color: var(--secondary-text);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 8px 10px;
+}
+
+#entity-table .tabulator .tabulator-header .tabulator-col-content {
+  padding: 0;
+}
+
+#entity-table .tabulator .tabulator-row {
+  background: var(--card-background);
+  border-bottom: 1px solid var(--divider);
+  color: var(--primary-text);
+  cursor: pointer;
+  min-height: 34px;
+}
+
+#entity-table .tabulator .tabulator-row:hover {
+  background: rgba(3, 169, 244, 0.06);
+}
+
+#entity-table .tabulator .tabulator-row .tabulator-cell {
+  padding: 6px 10px;
+  border-right: 1px solid var(--divider);
+}
+
+#entity-table .tabulator .tabulator-group {
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--divider);
+  padding: 6px 10px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#entity-table .tabulator .tabulator-group span {
+  color: var(--primary-color);
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+#entity-table .tabulator .tabulator-group .tabulator-group-toggle {
+  color: var(--secondary-text);
+}
+
+.group-domain {
+  color: var(--primary-color) !important;
+}
+
+.group-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-chip);
+  background: rgba(3, 169, 244, 0.14);
+  color: var(--primary-color) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+.entity-id-cell {
+  font-family: "Roboto Mono", "Menlo", monospace;
+  font-size: 12px;
+}
+
+/* State chips */
+.state-chip {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: var(--radius-chip);
+  font-size: 11px;
+  font-weight: 500;
+}
+.state-on  { background: rgba(67, 160, 71, 0.15); color: var(--success-color); }
+.state-off { background: rgba(0,0,0,0.06); color: var(--secondary-text); }
+.state-unavail { background: rgba(219,68,55,0.12); color: var(--error-color); }
+.state-other { background: rgba(3,169,244,0.1); color: var(--primary-color); }
+.state-null { color: var(--disabled-text); }
+
+@media (prefers-color-scheme: dark) {
+  .state-off { background: rgba(255,255,255,0.06); }
+}
+
+/* ── Detail panel ───────────────────────────────────── */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.detail-title {
+  font-family: "Roboto Mono", "Menlo", monospace;
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 6px;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-control);
+  gap: 2px;
+}
+
+.detail-key {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--secondary-text);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.detail-value {
+  font-family: "Roboto Mono", "Menlo", monospace;
+  font-size: 12px;
+  color: var(--primary-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Entity cards (legacy SSR — kept for safety) ────── */
 .entity-list {
   display: grid;
   gap: 8px;

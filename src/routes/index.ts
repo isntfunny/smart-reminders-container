@@ -259,6 +259,19 @@ export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRo
     }
   });
 
+  router.get("/api/entities", async (req, res) => {
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    const filter = q
+      ? { $or: [{ entityId: new RegExp(escapeRegex(q), "i") }, { domain: new RegExp(escapeRegex(q), "i") }] }
+      : {};
+    const entities = await EntityModel.find(filter)
+      .sort({ domain: 1, entityId: 1 })
+      .limit(2000)
+      .lean()
+      .exec();
+    res.json({ ok: true, count: entities.length, entities });
+  });
+
   router.get("/api/ha/status", async (_req, res) => {
     try {
       const status = await hass.status();
