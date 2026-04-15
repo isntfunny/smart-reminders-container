@@ -15,7 +15,13 @@ export type HomeAssistantApiConfig = {
 function resolveBase(): { baseUrl: string; token: string | null } {
   const raw = process.env.HA_URL || "http://supervisor/core";
   const baseUrl = raw.replace(/\/+$/, "");
-  const token = process.env.HA_TOKEN || null;
+  // Supervisor injects SUPERVISOR_TOKEN (alias HASSIO_TOKEN); run.sh re-exports
+  // it as HA_TOKEN — but bashio can interfere, so we fall back to both.
+  const token =
+    process.env.HA_TOKEN ||
+    process.env.SUPERVISOR_TOKEN ||
+    process.env.HASSIO_TOKEN ||
+    null;
   return { baseUrl, token };
 }
 

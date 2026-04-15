@@ -1,5 +1,5 @@
 name: "Smart Reminders"
-version: "0.4.3"
+version: "0.4.4"
 slug: smart_reminders
 description: "Smart reminders with AI-powered automations for Home Assistant (bundled MongoDB 8)"
 url: "https://github.com/isntfunny/smart-reminders-container"
@@ -12,6 +12,7 @@ init: false
 ingress: true
 ingress_port: 3000
 homeassistant_api: true
+hassio_api: true
 map:
   - "share:rw"
 options:
