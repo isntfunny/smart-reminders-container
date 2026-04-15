@@ -31,7 +31,7 @@ const hassioOptions = loadHassioOptions();
 // Environment variables with Home Assistant add-on support
 const app = express();
 const port = Number(process.env.PORT || 3000);
-const mongoUrl = process.env.MONGO_URL || hassioOptions.mongo_url || "mongodb://localhost:27017/smart_reminders";
+const mongoUrl = process.env.MONGO_URL || "mongodb://localhost:27017/smart_reminders";
 
 // Set Home Assistant add-on options as environment variables for other modules
 if (hassioOptions.ha_url) process.env.HA_URL = hassioOptions.ha_url;
@@ -70,8 +70,10 @@ app.use((req, res, next) => {
 });
 
 const hass = createHomeAssistantClient();
-const openRouter = createOpenRouterClient();
-const indexRouter = createIndexRouter(hass, openRouter);
+export const openRouterRef: { current: import("./openRouter").OpenRouterClient | null } = {
+  current: createOpenRouterClient()
+};
+const indexRouter = createIndexRouter(hass, openRouterRef);
 app.use(indexRouter);
 
 async function start() {

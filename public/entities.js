@@ -92,13 +92,14 @@
     table = new Tabulator("#entity-table", {
       data: data,
       layout: "fitColumns",
+      renderVertical: "virtual",
       groupBy: "domain",
       groupToggleElement: "header",
-      groupStartOpen: true,
+      groupStartOpen: false,
       groupHeader: function (value, count) {
         return `<span class="group-domain">${value}</span><span class="group-count">${count}</span>`;
       },
-      maxHeight: "65vh",
+      height: "65vh",
       initialSort: [{ column: "entityId", dir: "asc" }],
       columns: [
         {

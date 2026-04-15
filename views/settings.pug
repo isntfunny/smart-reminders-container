@@ -1,0 +1,34 @@
+extends layout
+
+block content
+  main.container
+    header.hero
+      .hero-text
+        h1 Settings
+        p OpenRouter-Konfiguration für KI-Automationen.
+      .hero-right
+        a.nav-link(href=".") Builder
+        a.nav-link(href="entities") Entities
+        span.hero-badge Smart Reminders
+
+    section.card
+      h2.card-title OpenRouter API
+      form#settingsForm.prompt-form
+        label(for="apiKey") API Key
+        .prompt-row
+          input#apiKey(type="text" name="openrouter_api_key" placeholder="sk-or-..." autocomplete="off" spellcheck="false")
+        label(for="model") Modell
+        .prompt-row
+          input#model(type="text" name="openrouter_model" placeholder="google/gemini-3-flash-preview" autocomplete="off")
+        label(for="maxTokens") Max Tokens
+        .prompt-row
+          input#maxTokens(type="text" name="openrouter_max_tokens" placeholder="2400" autocomplete="off")
+        label(for="temperature") Temperature
+        .prompt-row
+          input#temperature(type="text" name="openrouter_temperature" placeholder="0.2" autocomplete="off")
+        .prompt-row(style="margin-top:8px")
+          button(type="submit") Speichern
+      p#settingsStatus.results-info.is-hidden
+
+block scripts
+  script(src="settings.js")
