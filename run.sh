@@ -1,14 +1,9 @@
 #!/usr/bin/env bashio
-
-bashio::log.info "ENV DUMP: $(env | tr ' ' '\n' | head -50)"
-
-export MONGO_URL="mongodb://smart_reminder_db:27017/smart_reminders"
+set -e
 
 HA_URL="${HA_URL:-http://supervisor/core}"
 HA_TOKEN="${HA_TOKEN:-${SUPERVISOR_TOKEN:-}}"
-
-export HA_URL
-export HA_TOKEN
+export HA_URL HA_TOKEN
 
 if bashio::config.exists 'openrouter_api_key' 2>/dev/null; then
   export OPENROUTER_API_KEY=$(bashio::config 'openrouter_api_key')
@@ -20,12 +15,46 @@ if bashio::config.exists 'openrouter_api_key' 2>/dev/null; then
   export OPENROUTER_SITE_URL=$(bashio::config 'openrouter_site_url')
   export OPENROUTER_SITE_NAME=$(bashio::config 'openrouter_site_name')
 else
-  export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-}"
   export OPENROUTER_MODEL="${OPENROUTER_MODEL:-google/gemini-3-flash-preview}"
   export OPENROUTER_MAX_TOKENS="${OPENROUTER_MAX_TOKENS:-2400}"
   export OPENROUTER_TEMPERATURE="${OPENROUTER_TEMPERATURE:-0.2}"
 fi
 
-bashio::log.info "Starting Smart Reminders with HA at ${HA_URL}"
-bashio::log.info "Environment: MONGO_URL=${MONGO_URL}, HA_URL=${HA_URL}, HA_TOKEN_SET=${HA_TOKEN:+yes}, OPENROUTER_MODEL=${OPENROUTER_MODEL}"
+EXTERNAL_MONGO=""
+if bashio::config.exists 'mongo_url' 2>/dev/null; then
+  CFG_MONGO=$(bashio::config 'mongo_url')
+  if [ -n "$CFG_MONGO" ] && [ "$CFG_MONGO" != "null" ]; then
+    EXTERNAL_MONGO="$CFG_MONGO"
+  fi
+fi
+
+if [ -n "$EXTERNAL_MONGO" ]; then
+  export MONGO_URL="$EXTERNAL_MONGO"
+  bashio::log.info "Using external MongoDB"
+else
+  export MONGO_URL="mongodb://127.0.0.1:27017/smart_reminders"
+  bashio::log.info "Starting embedded MongoDB 8.0 (dbpath=/data/db)"
+  mkdir -p /data/db
+  mongod \
+    --dbpath /data/db \
+    --bind_ip 127.0.0.1 \
+    --port 27017 \
+    --logpath /data/mongod.log \
+    --fork
+
+  for i in $(seq 1 30); do
+    if mongosh --quiet --eval 'db.adminCommand("ping").ok' "mongodb://127.0.0.1:27017" >/dev/null 2>&1; then
+      bashio::log.info "MongoDB is ready"
+      break
+    fi
+    sleep 1
+    if [ "$i" = "30" ]; then
+      bashio::log.fatal "MongoDB failed to start within 30s"
+      tail -n 50 /data/mongod.log || true
+      exit 1
+    fi
+  done
+fi
+
+bashio::log.info "Starting Smart Reminders (HA=${HA_URL}, Model=${OPENROUTER_MODEL})"
 exec node /usr/src/app/dist/index.js

@@ -1,14 +1,11 @@
 name: "Smart Reminders"
-version: "0.2.3"
+version: "0.4.0"
 slug: smart_reminders
-description: "Smart reminders container with AI-powered automation creation for Home Assistant"
+description: "Smart reminders with AI-powered automations for Home Assistant (bundled MongoDB 8)"
 url: "https://github.com/isntfunny/smart-reminders-container"
 arch:
   - aarch64
   - amd64
-  - armhf
-  - armv7
-  - i386
 startup: application
 boot: auto
 init: false
@@ -22,6 +19,7 @@ options:
   openrouter_model: "google/gemini-3-flash-preview"
   openrouter_max_tokens: 2400
   openrouter_temperature: 0.2
+  mongo_url: ""
 schema:
   openrouter_api_key: str?
   openrouter_model: str?
@@ -31,3 +29,4 @@ schema:
   openrouter_cache_control_ttl: str?
   openrouter_site_url: str?
   openrouter_site_name: str?
+  mongo_url: str?
