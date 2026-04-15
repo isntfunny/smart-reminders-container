@@ -7,11 +7,11 @@ block content
         h1 Entity Explorer
         p Entitäten aus MongoDB und Home Assistant
       .hero-right
-        a.nav-link(href="/") Builder
+        a.nav-link(href=".") Builder
         span.hero-badge Smart Reminders
     section.card
       h2.card-title MongoDB Entity Viewer
-      form.search-form(method="get" action="/entities")
+      form.search-form(method="get" action="entities")
         label(for="entityQuery") Entity suchen
         .search-row
           input#entityQuery(type="text" name="q" placeholder="z.B. light.kitchen" value=entityQuery)
