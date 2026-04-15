@@ -2,16 +2,10 @@ import { Router } from "express";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 import YAML from "yaml";
-import fs from "fs";
 import { getHomeAssistantApiConfig, saveAutomationConfig } from "../homeAssistant";
 import type { HomeAssistantClient } from "../homeAssistant";
 import { EntityModel } from "../models/Entity";
 import type { OpenRouterClient } from "../openRouter";
-import { createOpenRouterClient } from "../openRouter";
-
-type OpenRouterRef = { current: OpenRouterClient | null };
-
-const OPTIONS_PATH = "/data/options.json";
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -89,7 +83,7 @@ function parseAutomationResponse(content: string): AutomationResponse | null {
   return null;
 }
 
-export function createIndexRouter(hass: HomeAssistantClient, openRouterRef: OpenRouterRef): Router {
+export function createIndexRouter(hass: HomeAssistantClient, _openRouter: OpenRouterClient | null): Router {
   const router = Router();
 
   async function getBaseViewData(entityQuery: string) {
@@ -148,7 +142,7 @@ export function createIndexRouter(hass: HomeAssistantClient, openRouterRef: Open
     const baseYaml = typeof req.body.yaml === "string" ? req.body.yaml.trim() : "";
     const mode = typeof req.body.mode === "string" ? req.body.mode.trim() : "";
 
-    if (!openRouterRef.current) {
+    if (!_openRouter) {
       res.status(400).json({ ok: false, error: "OpenRouter ist nicht konfiguriert. Bitte OPENROUTER_API_KEY setzen." });
       return;
     }
@@ -193,16 +187,15 @@ export function createIndexRouter(hass: HomeAssistantClient, openRouterRef: Open
         .filter(Boolean)
         .join("\n");
 
-      const or = openRouterRef.current!;
-      const completion = await or.client.responses.parse({
-        model: or.model,
+      const completion = await _openRouter.client.responses.parse({
+        model: _openRouter.model,
         input: [
           { role: "system", content: systemPrompt },
           { role: "user", content: prompt }
         ],
         text: { format: zodTextFormat(AutomationResponseSchema, "automation") },
-        max_output_tokens: or.maxTokens,
-        temperature: or.temperature
+        max_output_tokens: _openRouter.maxTokens,
+        temperature: _openRouter.temperature
       });
 
       const parsed = completion.output_parsed ?? parseAutomationResponse(completion.output_text ?? "");
@@ -287,60 +280,6 @@ export function createIndexRouter(hass: HomeAssistantClient, openRouterRef: Open
       const message = err instanceof Error ? err.message : "Unknown Home Assistant error";
       res.status(500).json({ ok: false, error: message });
     }
-  });
-
-  router.get("/settings", (_req, res) => {
-    res.render("settings", { title: "Settings – Smart Reminders" });
-  });
-
-  router.get("/api/settings", (_req, res) => {
-    res.json({
-      ok: true,
-      settings: {
-        openrouter_api_key: process.env.OPENROUTER_API_KEY || "",
-        openrouter_model: process.env.OPENROUTER_MODEL || "google/gemini-3-flash-preview",
-        openrouter_max_tokens: Number(process.env.OPENROUTER_MAX_TOKENS || 2400),
-        openrouter_temperature: Number(process.env.OPENROUTER_TEMPERATURE || 0.2)
-      }
-    });
-  });
-
-  router.post("/api/settings", (req, res) => {
-    const {
-      openrouter_api_key,
-      openrouter_model,
-      openrouter_max_tokens,
-      openrouter_temperature
-    } = req.body as Record<string, string>;
-
-    // Update environment variables
-    if (openrouter_api_key !== undefined) process.env.OPENROUTER_API_KEY = openrouter_api_key.trim();
-    if (openrouter_model !== undefined) process.env.OPENROUTER_MODEL = openrouter_model.trim();
-    if (openrouter_max_tokens !== undefined) process.env.OPENROUTER_MAX_TOKENS = openrouter_max_tokens.trim();
-    if (openrouter_temperature !== undefined) process.env.OPENROUTER_TEMPERATURE = openrouter_temperature.trim();
-
-    // Persist to /data/options.json so settings survive addon restart
-    try {
-      let existing: Record<string, unknown> = {};
-      if (fs.existsSync(OPTIONS_PATH)) {
-        existing = JSON.parse(fs.readFileSync(OPTIONS_PATH, "utf-8"));
-      }
-      const updated = {
-        ...existing,
-        openrouter_api_key: process.env.OPENROUTER_API_KEY || "",
-        openrouter_model: process.env.OPENROUTER_MODEL || "",
-        openrouter_max_tokens: Number(process.env.OPENROUTER_MAX_TOKENS) || 2400,
-        openrouter_temperature: Number(process.env.OPENROUTER_TEMPERATURE) || 0.2
-      };
-      fs.writeFileSync(OPTIONS_PATH, JSON.stringify(updated, null, 2), "utf-8");
-    } catch (err) {
-      // Non-fatal: env is already updated for this session
-    }
-
-    // Recreate OpenRouter client with new credentials
-    openRouterRef.current = createOpenRouterClient();
-
-    res.json({ ok: true, enabled: openRouterRef.current !== null });
   });
 
   return router;

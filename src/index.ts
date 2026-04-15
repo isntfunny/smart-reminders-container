@@ -70,10 +70,8 @@ app.use((req, res, next) => {
 });
 
 const hass = createHomeAssistantClient();
-export const openRouterRef: { current: import("./openRouter").OpenRouterClient | null } = {
-  current: createOpenRouterClient()
-};
-const indexRouter = createIndexRouter(hass, openRouterRef);
+const openRouter = createOpenRouterClient();
+const indexRouter = createIndexRouter(hass, openRouter);
 app.use(indexRouter);
 
 async function start() {

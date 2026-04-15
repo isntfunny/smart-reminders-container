@@ -16,16 +16,11 @@ hassio_api: true
 map:
   - "share:rw"
 options:
-  openrouter_api_key: ""
   openrouter_model: "google/gemini-3-flash-preview"
   openrouter_max_tokens: 2400
   openrouter_temperature: 0.2
 schema:
-  openrouter_api_key: str?
+  openrouter_api_key: password?
   openrouter_model: str?
   openrouter_max_tokens: int?
   openrouter_temperature: float?
-  openrouter_cache_control_type: str?
-  openrouter_cache_control_ttl: str?
-  openrouter_site_url: str?
-  openrouter_site_name: str?
