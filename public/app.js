@@ -21,12 +21,14 @@
 
   function setStatus(message, isError) {
     statusEl.textContent = message;
-    statusEl.style.color = isError ? "#b00020" : "#1b1b1f";
+    statusEl.classList.toggle("is-error", !!isError);
+    statusEl.classList.toggle("is-success", !isError);
     statusEl.classList.remove("is-hidden");
   }
 
   function clearStatus() {
     statusEl.textContent = "";
+    statusEl.classList.remove("is-error", "is-success");
     statusEl.classList.add("is-hidden");
   }
 

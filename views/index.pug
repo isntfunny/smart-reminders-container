@@ -2,12 +2,14 @@ extends layout
 
 block content
   main.container
-    .hero
+    header.hero
       .hero-text
         h1 Automation Builder
-        p Formuliere eine Anforderung und erhalte sofort eine Home Assistant Automation als YAML.
-      .hero-badge Smart Reminders
-    .card.builder
+        p Beschreibe eine Automation, erhalte sofort YAML.
+      .hero-right
+        a.nav-link(href="/entities") Entities
+        span.hero-badge Smart Reminders
+    section.card
       form#automationForm.prompt-form
         label(for="automationPrompt") Automation Wunsch
         .prompt-row
@@ -20,11 +22,11 @@ block content
             h3#automationTitle
             p#automationMessage
           .result-actions
-            button#clearAutomation(type="button") Clear
+            button#clearAutomation.secondary(type="button") Clear
         .editor-shell
           #automationEditor.editor
         .refine-box
           label(for="automationRefine") Verfeinern / Rückfragen
           .refine-row
             input#automationRefine(type="text" name="refine" placeholder="z.B. nur werktags, Push aufs iPhone" autocomplete="off")
-            button#refineAutomation(type="button") Verfeinern
+            button#refineAutomation.secondary(type="button") Verfeinern
